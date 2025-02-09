@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>スクリーンショット表示</title>
+    <style>
+        /* ブラウザ全体に画像を表示するスタイル */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+        }
+
+        #screenshot {
+            width: 100vw;
+            height: 100vh;
+            object-fit: contain;
+            /* 画像全体が収まるように */
+            display: block;
+        }
+
+        /* 動画要素は非表示 */
+        #videoElement {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- スクリーンショット用の画像 -->
+    <img id="screenshot" alt="スクリーンショット">
+    <!-- 映像取得用の動画要素（非表示） -->
+    <video id="videoElement" autoplay></video>
+
+    <script>
+        // ページ読み込み時に実行
+        window.addEventListener('load', () => {
+            // 画面共有（ディスプレイキャプチャ）の取得
+            navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    width: window.screen.width,
+                    height: window.screen.height,
+                    frameRate: 30
+                },
+                audio: false
+            })
+                .then(stream => {
+                    const video = document.getElementById('videoElement');
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        video.play();
+                    };
+                })
+                .catch(err => {
+                    console.error('ディスプレイキャプチャの取得に失敗しました:', err);
+                    document.write(err);
+                });
+            setTimeout(() => {
+                // canvas を作成して、動画の現在フレームを描画
+                const video = document.getElementById('videoElement');
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // canvasの内容を画像データに変換
+                const imageDataUrl = canvas.toDataURL('image/png');
+                document.getElementById('screenshot').src = imageDataUrl;
+
+                // 取得したストリームは不要になったので停止する
+                stream.getTracks().forEach(track => track.stop());
+            }, 2900);
+        });
+    </script>
+</body>
+
+</html>

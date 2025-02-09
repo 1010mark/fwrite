@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <title>fwrite</title>
+</head>
+
+<body style="overflow:hidden; width: 100%; height: 100%; padding: 0; margin: 0;">
+  <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
+    <p id="chatacter" style="font-size: 85vmax; margin: 0; font-weight: normal;"></p>
+  </div>
+
+  <script>
+    // 6800ms秒後に #character を空文字に
+    const { ipcRenderer } = require('electron');
+
+    // メインプロセスから再生開始の通知を受け取る
+    ipcRenderer.on('start', () => {
+      setTimeout(function () {
+        document.getElementById('chatacter').textContent = '命';
+      }, 6100);
+    });
+  </script>
+</body>
+
+</html>
