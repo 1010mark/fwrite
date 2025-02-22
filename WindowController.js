@@ -1,4 +1,5 @@
-const { BrowserWindow, screen } = require('electron');
+const { BrowserWindow, screen, Notification } = require('electron');
+const sleep = (time) => new Promise((resolve) => setTimeout(resolve, time));//timeはミリ秒
 
 class WindowController {
     constructor(startTime) {
@@ -13,14 +14,17 @@ class WindowController {
      * 初期は非表示状態とする。positionX, positionYが省略された場合は画面中央に配置する。
      * 作成したウィンドウは内部のthis.windowsにidとともに保持する。
      */
-    _createWindow(id, name, width, height, positionX, positionY, frame = false, other = {}) {
+    _createWindow(id, name, width, height, positionX, positionY, frame = true, other = {}) {
+        width = Math.round(width);
+        height = Math.round(height);
         // positionX, positionYが指定されなかった場合、画面中央に配置する
         if (positionX === undefined || positionY === undefined) {
-            const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-            positionX = Math.round((screenWidth - width) / 2);
-            positionY = Math.round((screenHeight - height) / 2);
+            other.center = true;
+           // const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+           // positionX = Math.round((screenWidth - width) / 2);
+           // positionY = Math.round((screenHeight - height) / 2);
         }
-        
+
         // フレームレスかつ初期非表示のウィンドウ作成
         let settings = {
             width: width,
@@ -32,10 +36,10 @@ class WindowController {
                 nodeIntegration: true,
                 contextIsolation: false,
             },
-            useContentSize: true,
+           // useContentSize: true,
             ...other
         }
-        if (!settings.center){
+        if (!settings.center) {
             settings.x = positionX;
             settings.y = positionY;
         }
@@ -66,7 +70,7 @@ class WindowController {
      * 指定されたidのウィンドウを、time (ミリ秒) 後に削除する。
      */
     deleteSetTime(id, time) {
-        setTimeout(() => {
+        setTimeout(async () => {
             this._deleteWindow(id);
         }, this.startTime + time);
     }
@@ -74,11 +78,15 @@ class WindowController {
     /**
      * deletePositiveWindows(time)
      * 正の数のidのウィンドウを、time (ミリ秒) 後に削除する。
+     * delay (ms) 毎に1つずつ削除する。
      */
-    deletePositiveWindows(time) {
-        setTimeout(() => {
+    deletePositiveWindows(time, delay = 0) {
+        setTimeout(async () => {
             for (const id in this.windows) {
-                if(id > 0)this._deleteWindow(id);
+                if (id > 0) {
+                    this._deleteWindow(id);
+                    await sleep(delay);
+                }
             }
         }, this.startTime + time);
     }
@@ -131,7 +139,7 @@ class WindowController {
                 const deltaY = posY - startY;
                 const startTime = Date.now();
                 const interval = 20; // 更新間隔 (ms)
-    
+
                 const timer = setInterval(() => {
                     const elapsed = Date.now() - startTime;
                     let progress = elapsed / time;
@@ -225,6 +233,47 @@ class WindowController {
                 }
             }, interval);
         }, time1);
+    }
+
+    /**
+     * _createNotify(id, title, body, settings)
+     * デスクトップ通知を行う。
+     * settings には通知の詳細設定を記述する。
+     */
+    _createNotify(id, title, body, settings = {}) {
+        const notification = new Notification({ title, body, ...settings, silent: true });
+        console.log("notify");
+        if (id in this.windows) console.error(`this id ${id} already exists`);
+        else this.windows[id] = notification;
+    }
+
+    /**
+     * notifySetTime(time, title, body, settings)
+     * time (ms) 後にデスクトップ通知を行う。
+     * settings には通知の詳細設定を記述する。
+     * ※集中モードは切ること
+     */
+    notifySetTime(id, time, title, body, settings = {}) {
+        setTimeout(() => {
+            console.log('set notify');
+            this._createNotify(id, title, body, settings);
+            const notification = this.windows[id];
+            if (notification) {
+                notification.show();
+            } else {
+                console.error(`this id ${id} does not exist`);
+            }
+        }, this.startTime + time);
+    }
+
+    /**
+     * deleteNotifySetTime(id, time)
+     * time (ms) 後にデスクトップ通知を閉じる。
+     */
+    deleteNotifySetTime(id, time) {
+        setTimeout(() => {
+            this._deleteWindow(id);
+        }, this.startTime + time);
     }
 }
 

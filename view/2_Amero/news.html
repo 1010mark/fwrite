@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>fwrite</title>
+</head>
+<body style="overflow:hidden; width: 120%; height: 120%; padding: 0; margin: 0;">
+  <!-- preload 属性で動画を事前読み込み -->
+  <video id="myVideo" width="180" preload="auto" style="position: absolute; inset: 0; margin: auto;" muted>
+    <source src="../mov/NEWS.mp4" type="video/mp4">
+    お使いのブラウザは HTML5 動画に対応していません。
+  </video>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    // メインプロセスから再生開始の通知を受け取る
+    ipcRenderer.on('start', () => {
+      const video = document.getElementById('myVideo');
+      video.play();
+    });
+  </script>
+</body>
+</html>

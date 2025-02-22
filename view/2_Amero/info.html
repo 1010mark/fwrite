@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Service Status</title>
+    <style>
+        .info { margin: 1px 0; font-size: 14px; }
+    </style>
+</head>
+<body style="overflow:hidden; width: 100%; height: 100%; padding: 0; margin: 0;">
+    <div class="info" id="platform"></div>
+    <div class="info" id="cpuUsage"></div>
+    <div class="info" id="totalMem"></div>
+    <div class="info" id="freeMem"></div>
+    <div class="info" id="uptime"></div>
+    <div class="info">本日: 通常通りに運行しています。</div>
+
+    <script>
+        const { ipcRenderer } = require("electron");
+
+        ipcRenderer.on("system-info", (event, data) => {
+            document.getElementById("platform").innerText = `OS: ${data.platform}`;
+            document.getElementById("cpuUsage").innerText = `CPU使用率 (負荷平均): ${data.cpuUsage.toFixed(2)}`;
+            document.getElementById("totalMem").innerText = `総メモリ: ${(data.totalMem / 1024 / 1024 / 1024).toFixed(2)} GB`;
+            document.getElementById("freeMem").innerText = `空きメモリ: ${(data.freeMem / 1024 / 1024 / 1024).toFixed(2)} GB`;
+            document.getElementById("uptime").innerText = `稼働時間: ${(data.uptime / 3600).toFixed(2)} 時間`;
+        });
+    </script>
+</body>
+</html>
